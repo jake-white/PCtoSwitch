@@ -41,150 +41,8 @@ typedef struct {
 	uint16_t duration;
 } command; 
 
-static const command step[] = {
-	// Setup controller
-	{ NOTHING,  250 },
-	{ TRIGGERS,   5 },
-	{ NOTHING,  150 },
-	{ TRIGGERS,   5 },
-	{ NOTHING,  150 },
-	{ A,          5 },
-	{ NOTHING,  250 },
-
-	// Talk to Pondo
-	{ A,          5 }, // Start
-	{ NOTHING,   30 },
-	{ B,          5 }, // Quick output of text
-	{ NOTHING,   20 }, // Halloo, kiddums!
-	{ A,          5 }, // <- I'll try it!
-	{ NOTHING,   15 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ A,          5 }, // <- OK!
-	{ NOTHING,   15 },
-	{ B,          5 },
-	{ NOTHING,   20 }, // Aha! Play bells are ringing! I gotta set up the pins, but I'll be back in a flurry
-	{ A,          5 }, // <Continue>
-	{ NOTHING,  325 }, // Cut to different scene (Knock 'em flat!)
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ A,          5 }, // <Continue> // Camera transition takes place after this
-	{ NOTHING,   50 },
-	{ B,          5 },
-	{ NOTHING,   20 }, // If you can knock over all 10 pins in one roll, that's a strike
-	{ A,          5 }, // <Continue>
-	{ NOTHING,   15 },
-	{ B,          5 },
-	{ NOTHING,   20 }, // A spare is...
-	{ A,          5 }, // <Continue>
-	{ NOTHING,  100 }, // Well, good luck
-	{ A,          5 }, // <Continue>
-	{ NOTHING,  150 }, // Pondo walks away
-
-	// Pick up Snowball (Or alternatively, run to bail in case of a non-strike)
-	{ A,          5 },
-	{ NOTHING,   50 },
-	{ LEFT,      42 },
-	{ UP,        80 },
-	{ THROW,     25 },
-
-	// Non-strike alternative flow, cancel bail and rethrow
-	{ NOTHING,   30 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 }, // I have to split dialogue (It's nothing)
-	{ NOTHING,   15 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,  450 },
-	{ B,          5 }, // Snowly moly... there are rules!
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 }, // Second dialogue
-	{ NOTHING,   20 },
-	{ DOWN,      10 }, // Return to snowball
-	{ NOTHING,   20 },
-	{ A,          5 }, // Pick up snowball, we just aimlessly throw it
-	{ NOTHING,   50 },
-	{ UP,        10 },
-	{ THROW,     25 },
-
-	// Back at main flow
-	{ NOTHING,  175 }, // Ater throw wait
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 }, // To the rewards
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	
-	{ B,          5 }, // Wait for 450 cycles by bashing B (Like real players do!)
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 },
-	{ B,          5 },
-	{ NOTHING,   20 } // Saving, intermission
-};
+bool press_started[] = {false, false, false, false};
+bool pressed[] = {false, false, false, false};
 
 // Main entry point.
 int main(void) {
@@ -252,6 +110,20 @@ void EVENT_USB_Device_ControlRequest(void) {
 	// We can handle two control requests: a GetReport and a SetReport.
 
 	// Not used here, it looks like we don't receive control request from the Switch.
+}
+
+
+int16_t analogRead(uint8_t pin)
+{
+	uint8_t low;
+
+	DIDR0 |= 0x01;
+	ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
+	ADMUX = 0x40;  // channel 0, ref=vcc
+	ADCSRA |= (1<<ADSC);
+	while (ADCSRA & (1<<ADSC)) ;
+	low = ADCL;
+	return (ADCH << 8) | low;
 }
 
 // Process and deliver data from IN and OUT endpoints.
@@ -390,87 +262,23 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 			break;
 
 		case PROCESS:
-
-			switch (step[bufindex].button)
-			{
-
-				case UP:
-					ReportData->LY = STICK_MIN;				
-					break;
-
-				case LEFT:
-					ReportData->LX = STICK_MIN;				
-					break;
-
-				case DOWN:
-					ReportData->LY = STICK_MAX;				
-					break;
-
-				case RIGHT:
-					ReportData->LX = STICK_MAX;				
-					break;
-
-				case A:
-					ReportData->Button |= SWITCH_A;
-					break;
-
-				case B:
-					ReportData->Button |= SWITCH_B;
-					break;
-
-				case R:
-					ReportData->Button |= SWITCH_R;
-					break;
-
-				case THROW:
-					ReportData->LY = STICK_MIN;				
-					ReportData->Button |= SWITCH_R;
-					break;
-
-				case TRIGGERS:
-					ReportData->Button |= SWITCH_L | SWITCH_R;
-					break;
-
-				default:
-					ReportData->LX = STICK_CENTER;
-					ReportData->LY = STICK_CENTER;
-					ReportData->RX = STICK_CENTER;
-					ReportData->RY = STICK_CENTER;
-					ReportData->HAT = HAT_CENTER;
-					break;
+			pressed[0] = PIND & (1<<0);
+			pressed[1] = PIND & (1<<1);
+			pressed[2] = PIND & (1<<2);
+			pressed[3] = PIND & (1<<3);
+		
+			if(pressed[0]) {
+				ReportData->HAT = HAT_LEFT;
 			}
-
-			duration_count++;
-
-			if (duration_count > step[bufindex].duration)
-			{
-				bufindex++;
-				duration_count = 0;				
+			else if(pressed[1]) {
+				ReportData->HAT = HAT_RIGHT;
 			}
-
-
-			if (bufindex > (int)( sizeof(step) / sizeof(step[0])) - 1)
-			{
-
-				// state = CLEANUP;
-
-				bufindex = 7;
-				duration_count = 0;
-
-				state = BREATHE;
-
-				ReportData->LX = STICK_CENTER;
-				ReportData->LY = STICK_CENTER;
-				ReportData->RX = STICK_CENTER;
-				ReportData->RY = STICK_CENTER;
-				ReportData->HAT = HAT_CENTER;
-
-
-				// state = DONE;
-//				state = BREATHE;
-
+			else if(pressed[2]) {
+				ReportData->HAT = HAT_TOP;
 			}
-
+			else if(pressed[3]) {
+				ReportData->Button |= SWITCH_A;
+			}
 			break;
 
 		case CLEANUP:
@@ -482,7 +290,6 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 			portsval = ~portsval;
 			PORTD = portsval; //flash LED(s) and sound buzzer if attached
 			PORTB = portsval;
-			_delay_ms(250);
 			#endif
 			return;
 	}
@@ -497,3 +304,4 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 	echoes = ECHOES;
 
 }
+
