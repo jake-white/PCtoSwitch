@@ -41,8 +41,6 @@ typedef struct {
 	uint16_t duration;
 } command; 
 
-bool press_started[] = {false, false, false, false};
-bool pressed[] = {false, false, false, false};
 
 // Main entry point.
 int main(void) {
@@ -110,20 +108,6 @@ void EVENT_USB_Device_ControlRequest(void) {
 	// We can handle two control requests: a GetReport and a SetReport.
 
 	// Not used here, it looks like we don't receive control request from the Switch.
-}
-
-
-int16_t analogRead(uint8_t pin)
-{
-	uint8_t low;
-
-	DIDR0 |= 0x01;
-	ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);
-	ADMUX = 0x40;  // channel 0, ref=vcc
-	ADCSRA |= (1<<ADSC);
-	while (ADCSRA & (1<<ADSC)) ;
-	low = ADCL;
-	return (ADCH << 8) | low;
 }
 
 // Process and deliver data from IN and OUT endpoints.
@@ -262,22 +246,24 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 			break;
 
 		case PROCESS:
-			pressed[0] = PIND & (1<<0);
-			pressed[1] = PIND & (1<<1);
-			pressed[2] = PIND & (1<<2);
-			pressed[3] = PIND & (1<<3);
-		
-			if(pressed[0]) {
+
+			if(PIND & (1<<0)) {
 				ReportData->HAT = HAT_LEFT;
 			}
-			else if(pressed[1]) {
+			if(PIND & (1<<1)) {
 				ReportData->HAT = HAT_RIGHT;
 			}
-			else if(pressed[2]) {
+			if(PIND & (1<<2)) {
 				ReportData->HAT = HAT_TOP;
 			}
-			else if(pressed[3]) {
+			if(PIND & (1<<3)) {
+				ReportData->HAT = HAT_BOTTOM;
+			}
+			if(PIND & (1<<4)) {
 				ReportData->Button |= SWITCH_A;
+			}
+			if(PIND & (1<<5)) {
+				ReportData->Button |= SWITCH_B;
 			}
 			break;
 
