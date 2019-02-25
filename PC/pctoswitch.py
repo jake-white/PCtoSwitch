@@ -4,7 +4,7 @@ pcinputs = ['a','d','w','s','space','shift']
 switchinputs = [False, False, False, False, False, False]
 
 #starting up serial input
-ser = serial.Serial('COM3', 9600, timeout=0.050)
+ser = serial.Serial('COM3', 9600, timeout=0.050)       
 connected = False
 while True:
     line = ""

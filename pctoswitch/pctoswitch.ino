@@ -9,7 +9,7 @@ void setup() {
   pinMode(7, OUTPUT);
 }
 
-bool left,right,up,down,a,b;
+bool left,right,up,down,a,b, lymin, lymax, lxmin, lxmax;
 void loop() {
   while(Serial.available() == 0){}
   char command = Serial.read();
@@ -36,5 +36,21 @@ void loop() {
   if(command=='5') {
     b = !b;
     digitalWrite(7, b);
+  }
+  if(command=='6') {
+    lymin = !lymin;
+    digitalWrite(8, lymin);
+  }
+  if(command=='7') {
+    lymax = !lymax;
+    digitalWrite(9, lymax);
+  }
+  if(command=='8') {
+    lxmin = !lxmin;
+    digitalWrite(10, lxmin);
+  }
+  if(command=='9') {
+    lxmax = !lxmax;
+    digitalWrite(11, lxmax);
   }
 }

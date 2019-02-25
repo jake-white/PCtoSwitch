@@ -248,16 +248,16 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 		case PROCESS:
 
 			if(PIND & (1<<0)) {
-				ReportData->HAT = HAT_LEFT;
+				ReportData->LX = STICK_MIN;
 			}
 			if(PIND & (1<<1)) {
-				ReportData->HAT = HAT_RIGHT;
+				ReportData->LX = STICK_MAX;
 			}
 			if(PIND & (1<<2)) {
-				ReportData->HAT = HAT_TOP;
+				ReportData->LY = STICK_MIN;
 			}
 			if(PIND & (1<<3)) {
-				ReportData->HAT = HAT_BOTTOM;
+				ReportData->LY = STICK_MAX;
 			}
 			if(PIND & (1<<4)) {
 				ReportData->Button |= SWITCH_A;
