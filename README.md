@@ -1,4 +1,4 @@
-## snowball thrower
+## PCtoSwitch
 
 Allows any inputs to be sent to a Nintendo Switch in real time from a PC.
 
